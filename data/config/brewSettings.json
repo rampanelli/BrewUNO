@@ -1,15 +1,15 @@
 {
-    "boilPowerPercentage": 100,
-    "boilTemperature": 99.1,
+    "boilPowerPercentage": 68,
+    "boilTemperature": 95,
     "boilTime": 60,
+    "mashHeaterPercentage": 68,
+    "spargePowerPercentage": 100,
+    "spargeTemperature": 76,
+    "pumpRestInterval": 300,
+    "pumpRestTime": 60,
+    "mashHeaterPercentage": 100,
     "kP": 1100,
     "kI": 3.5,
     "kD": 0,
-    "pumpRestInterval": 300,
-    "pumpRestTime": 60,
-    "mashHeaterPercentage": 66,
-    "enableSparge": false,
-    "spargeTemperature": 75,
-    "spargePowerPercentage": 100,
-    "pidStart": 0.5
+    "pidStart": 0.3
 }

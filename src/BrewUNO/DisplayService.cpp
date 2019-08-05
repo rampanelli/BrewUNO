@@ -2,18 +2,23 @@
 
 time_t lastUpdate = now();
 String blankline = "                    ";
-byte apmode[] = {B01010, B00100, B01010, B00100, B00100, B00100, B01110, B11111};
-byte stmode[] = {B01110, B10001, B00100, B01010, B00000, B00100, B00000, B00000};
+byte apmode[] = {B01010, B00100, B01010, B00100, B00100, B00100, B01110, B11111}; 
+//{B10101, B10101, B10101, B01110, B00100, B00100, B00100, B00100};
+byte stmode[] = {B01110, B11011, B10101, B11011, B10101, B01010, B01110, B00100};
 byte gpump[] = {B00100, B00100, B01110, B01110, B11111, B11101, B11011, B01110};
-byte pheater[] = {B10100, B11100, B10100, B00010, B00110, B00010, B00010, B00111};
-byte sheater[] = {B10100, B11100, B10100, B00111, B00001, B00111, B00100, B00111};
+//byte pheater[] = {B11100, B10100, B11100, B10101, B10101, B00111, B00101, B00101};
+//byte pheater[] = {B01000, B11000, B01000, B01101, B01101, B00111, B00101, B00101};
+byte pheater[] = {  B10100, B11100, B10100, B00010, B00110, B00010, B00010, B00111};
+//byte sheater[] = {B11100, B10000, B11100, B00101, B11101, B00111, B00101, B00101};
+//byte sheater[] = {B11100, B00100, B11000, B10101, B11101, B00111, B00101, B00101};
+byte sheater[] = {  B10100, B11100, B10100, B00111, B00001, B00111, B00100, B00111};
 byte gcelsius[] = {B01000, B10100, B01000, B00110, B01001, B01000, B01001, B00110};
 byte gwm[] = {B11111, B01000, B00100, B01000, B11111, B00000, B11111, B00110};
 byte gpw[] = {B00110, B11111, B00000, B11100, B10100, B10100, B11111, B00000};
 
 DisplayService::DisplayService(ActiveStatus *activeStatus, WiFiStatus *wifiStatus, LiquidCrystal_I2C *lcd) : _activeStatus(activeStatus),
-                                                                                                             _wifiStatus(wifiStatus),
-                                                                                                             _lcd(lcd)
+                                                                                                            _wifiStatus(wifiStatus),
+                                                                                                            _lcd(lcd)
 {
 }
 
@@ -40,14 +45,14 @@ void DisplayService::loop()
         lastUpdate = now();
         printHead();
         printBody(1, pheater_icon, gwm_icon, _activeStatus->Temperature, _activeStatus->TargetTemperature, _activeStatus->PWMPercentage,
-                  _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
+                _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
         printBody(2, sheater_icon, gpw_icon, _activeStatus->SpargeTemperature, _activeStatus->SpargeTargetTemperature, _activeStatus->SpargePWMPercentage,
-                  _activeStatus->PumpOn, _activeStatus->BrewStarted, false, true, _activeStatus->EnableSparge);
+                _activeStatus->PumpOn, _activeStatus->BrewStarted, false, true, _activeStatus->EnableSparge);
         printFooter();
     }
 }
 
-void DisplayService::printHead()
+/* void DisplayService::printHead()
 {
     _lcd->setCursor(0, 0);
     wl_status_t status = WiFi.status();
@@ -63,6 +68,33 @@ void DisplayService::printHead()
         _lcd->print(GetCount(false) + 'L');
     else
         _lcd->print("         ");
+} */
+
+void DisplayService::printHead()
+{
+    _lcd->setCursor(0, 0);
+    wl_status_t status = WiFi.status();
+    WiFiMode_t currentWiFiMode = WiFi.getMode();
+    if (status == WL_CONNECTED)
+        _lcd->write(2);
+    else if (currentWiFiMode == WIFI_AP || currentWiFiMode == WIFI_AP_STA)
+        _lcd->write(1);
+    _lcd->print("BRewUNO 6 ");
+    if (_activeStatus->BrewStarted && !_activeStatus->StepLocked) {
+        _lcd->print(GetCount(true));
+        _lcd->setCursor(19, 2);
+        _lcd->print(" ");
+    }
+    else if (_activeStatus->StepLocked) {
+        _lcd->print(GetCount(false));
+        _lcd->setCursor(19, 2);
+        _lcd->print("L");
+    }
+    else {
+        _lcd->print("         ");
+        _lcd->setCursor(19, 2);
+        _lcd->print(" ");
+    } 
 }
 
 void DisplayService::printBody(int line, byte heatIcon, byte pwmIcon, double temperature, double targetTemperature,

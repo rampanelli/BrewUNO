@@ -14,6 +14,16 @@
             "n": "3rtHopAroma",
             "tm": 15,
             "a": 30
+        },
+        {
+            "n": "Chiller",
+            "tm": 10,
+            "a": 0
+        },
+        {
+            "n": "StartCooling",
+            "tm": 0,
+            "a": 0
         }
     ]
 }

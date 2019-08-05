@@ -79,7 +79,7 @@ void DisplayService::printHead()
         _lcd->write(2);
     else if (currentWiFiMode == WIFI_AP || currentWiFiMode == WIFI_AP_STA)
         _lcd->write(1);
-    _lcd->print("BRewUNO 6 ");
+    _lcd->print("BRewUNO6b ");
     if (_activeStatus->BrewStarted && !_activeStatus->StepLocked) {
         _lcd->print(GetCount(true));
         _lcd->setCursor(19, 2);
@@ -148,8 +148,8 @@ void DisplayService::printFooter()
     }
     else if (_activeStatus->ActiveStep == mash)
     {
-        String step = _activeStatus->ActiveMashStepName.substring(0, 13) + " " + _activeStatus->ActiveMashStepSufixName.substring(0, 6);
-        _lcd->print(step);
+        String step = _activeStatus->ActiveMashStepName.substring(0, 12) + " " + _activeStatus->ActiveMashStepSufixName.substring(0, 7);
+        _lcd->print(step.substring(0,20));
         RemoveLastChars(step.length());
     }
     else if (_activeStatus->ActiveStep == boil && _activeStatus->ActiveBoilStepName != "")

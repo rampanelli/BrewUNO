@@ -2,7 +2,7 @@
 
 High precision and accuracy, open source, online, extensible and low cost homebrew automation on top of ESP8266 microchip.
 
-![BrewUNO](http://brewuno.com/images/home-brewuno.png)
+![BrewUNO](https://github.com/rampanelli/BrewUNO/blob/master/brewuno_06b.png)
 
 ## Features:
 * 100% mobile interface
@@ -22,7 +22,7 @@ High precision and accuracy, open source, online, extensible and low cost homebr
 
 ### Simple Wiring and construction:
 
-![WireUP](https://github.com/rampanelli/BrewUNO/blob/master/brewuno_06b.png)
+![WireUP](https://github.com/rampanelli/BrewUNO/blob/master/diagram.png)
 
 This is the easiest way to mount your brewuno, you can improve it!
 

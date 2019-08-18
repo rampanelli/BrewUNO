@@ -8,6 +8,8 @@
     "pumpRestInterval": 300,
     "pumpRestTime": 60,
     "mashHeaterPercentage": 100,
+    "mainSensorOffset": 0,
+    "spargeSensorOffset": 0,
     "kP": 1100,
     "kI": 3.5,
     "kD": 0,

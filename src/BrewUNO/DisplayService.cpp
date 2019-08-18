@@ -17,15 +17,37 @@ byte gwm[] = {B11111, B01000, B00100, B01000, B11111, B00000, B11111, B00110};
 byte gpw[] = {B00110, B11111, B00000, B11100, B10100, B10100, B11111, B00000};
 
 DisplayService::DisplayService(ActiveStatus *activeStatus, WiFiStatus *wifiStatus, LiquidCrystal_I2C *lcd) : _activeStatus(activeStatus),
-                                                                                                            _wifiStatus(wifiStatus),
-                                                                                                            _lcd(lcd)
+                                                                                                             _wifiStatus(wifiStatus),
+                                                                                                             _lcd(lcd)
 {
+    Wire.begin();
 }
 
 DisplayService::~DisplayService() {}
 
+void DisplayService::autoScan()
+{
+    byte error, address;
+    Serial.println("Scanning I2C bus...");
+    for (address = 1; address < 127; address++)
+    {
+        if (address == PCF8574_ADDRESS)
+            continue;
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0)
+        {
+            Serial.print("Found: ");
+            Serial.println(address, HEX);
+            _lcd->updateAddress(address);
+            break;
+        }
+    }
+}
+
 void DisplayService::begin()
 {
+    autoScan();
     _lcd->init();
     _lcd->backlight();
     _lcd->createChar(apmode_icon, apmode);
@@ -45,9 +67,9 @@ void DisplayService::loop()
         lastUpdate = now();
         printHead();
         printBody(1, pheater_icon, gwm_icon, _activeStatus->Temperature, _activeStatus->TargetTemperature, _activeStatus->PWMPercentage,
-                _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
+                  _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
         printBody(2, sheater_icon, gpw_icon, _activeStatus->SpargeTemperature, _activeStatus->SpargeTargetTemperature, _activeStatus->SpargePWMPercentage,
-                _activeStatus->PumpOn, _activeStatus->BrewStarted, false, true, _activeStatus->EnableSparge);
+                  _activeStatus->PumpOn, _activeStatus->BrewStarted, false, true, _activeStatus->EnableSparge);
         printFooter();
     }
 }
@@ -79,7 +101,7 @@ void DisplayService::printHead()
         _lcd->write(2);
     else if (currentWiFiMode == WIFI_AP || currentWiFiMode == WIFI_AP_STA)
         _lcd->write(1);
-    _lcd->print("BRewUNO6b ");
+    _lcd->print("BRewUNO9b ");
     if (_activeStatus->BrewStarted && !_activeStatus->StepLocked) {
         _lcd->print(GetCount(true));
         _lcd->setCursor(19, 2);

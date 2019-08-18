@@ -48,8 +48,7 @@ OneWire oneWire(TEMPERATURE_BUS);
 DallasTemperature DS18B20(&oneWire);
 int deviceCount = 0;
 
-LiquidCrystal_I2C lcd(0x27, 20, 4);
-
+LiquidCrystal_I2C lcd(0x0, 20, 4);
 AsyncWebServer server(80);
 
 SecuritySettingsService securitySettingsService = SecuritySettingsService(&server, &SPIFFS);
@@ -68,8 +67,8 @@ SystemStatus systemStatus = SystemStatus(&server, &securitySettingsService);
 //brewUNO
 ActiveStatus activeStatus = ActiveStatus(&SPIFFS);
 
-TemperatureService temperatureService = TemperatureService(&server, &SPIFFS, DS18B20);
 BrewSettingsService brewSettingsService = BrewSettingsService(&server, &SPIFFS, &activeStatus);
+TemperatureService temperatureService = TemperatureService(&server, &SPIFFS, DS18B20, &brewSettingsService);
 MashSettingsService mashSettings = MashSettingsService(&server, &SPIFFS);
 BoilSettingsService boilSettingsService = BoilSettingsService(&server, &SPIFFS, &brewSettingsService);
 

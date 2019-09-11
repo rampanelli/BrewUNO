@@ -33,16 +33,17 @@ void MashService::loop(ActiveStatus *activeStatus)
     {
         activeStatus->TargetTemperature = steps[0]["t"];
         activeStatus->ActiveMashStepIndex = 0;
-        activeStatus->HeaterOn = ((int) steps[0]["ho"]) == 1;
+        activeStatus->HeaterOn = ((int)steps[0]["ho"]) == 1;
+        activeStatus->FullPower = ((int)steps[0]["fp"]) == 1;
         activeStatus->ActiveMashStepName = steps[0]["n"].as<String>();
-        activeStatus->ActiveMashStepSufixName = getMashName(steps[0]);
+        activeStatus->ActiveMashStepSufixName = getMashName(activeStatus, steps[0]);
         _pump->TurnPumpOn();
 
         // brew was stopped during anti cavitatiton
         if (!activeStatus->BrewStarted || activeStatus->ActiveStep != mash)
             return;
     }
-    
+
     time_t timeNow = now();
     if (activeStatus->EndTime > 0 && timeNow > activeStatus->EndTime)
     {
@@ -79,12 +80,13 @@ void MashService::NextStep(ActiveStatus *activeStatus, JsonArray steps, time_t t
     JsonObject step = steps[nextMashStep];
     activeStatus->ActiveMashStepIndex = nextMashStep;
     activeStatus->ActiveMashStepName = step["n"].as<String>();
-    activeStatus->ActiveMashStepSufixName = getMashName(step);
+    activeStatus->ActiveMashStepSufixName = getMashName(activeStatus, step);
     activeStatus->StartTime = 0;
     activeStatus->EndTime = 0;
     activeStatus->TargetTemperature = step["t"];
     activeStatus->Recirculation = ((int)step["r"]) == 1;
     activeStatus->HeaterOn = ((int)step["ho"]) == 1;
+    activeStatus->FullPower = ((int)step["fp"]) == 1;
     activeStatus->StepLock = ((int)step["sl"]) == 1;
     Buzzer().Ring(1, 2000);
     if (!activeStatus->HeaterOn)
@@ -121,7 +123,7 @@ void MashService::StepStarted(ActiveStatus *activeStatus, JsonArray steps, time_
     activeStatus->HeaterOn = ((int)step["ho"]) == 1;
     activeStatus->StepLock = ((int)step["sl"]) == 1;
     activeStatus->ActiveMashStepName = step["n"].as<String>();
-    activeStatus->ActiveMashStepSufixName = getMashName(step);
+    activeStatus->ActiveMashStepSufixName = getMashName(activeStatus, step);
 
     Serial.print("Start time: ");
     Serial.println(activeStatus->StartTime);
@@ -137,8 +139,8 @@ void MashService::StepStarted(ActiveStatus *activeStatus, JsonArray steps, time_
     activeStatus->SaveActiveStatus();
 }
 
-String MashService::getMashName(JsonObject step)
+String MashService::getMashName(ActiveStatus *activeStatus, JsonObject step)
 {
     return step["tm"].as<String>() + "'@" +
-           step["t"].as<String>() + "c";
+           step["t"].as<String>() + activeStatus->TempUnit;
 }

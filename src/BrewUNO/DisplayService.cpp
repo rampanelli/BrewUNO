@@ -2,16 +2,11 @@
 
 time_t lastUpdate = now();
 String blankline = "                    ";
-byte apmode[] = {B01010, B00100, B01010, B00100, B00100, B00100, B01110, B11111}; 
-//{B10101, B10101, B10101, B01110, B00100, B00100, B00100, B00100};
-byte stmode[] = {B01110, B11011, B10101, B11011, B10101, B01010, B01110, B00100};
+byte apmode[] = {B01010, B00100, B01010, B00100, B00100, B00100, B01110, B11111};
+byte stmode[] = {B01110, B10001, B00100, B01010, B00000, B00100, B00000, B00000};
 byte gpump[] = {B00100, B00100, B01110, B01110, B11111, B11101, B11011, B01110};
-//byte pheater[] = {B11100, B10100, B11100, B10101, B10101, B00111, B00101, B00101};
-//byte pheater[] = {B01000, B11000, B01000, B01101, B01101, B00111, B00101, B00101};
-byte pheater[] = {  B10100, B11100, B10100, B00010, B00110, B00010, B00010, B00111};
-//byte sheater[] = {B11100, B10000, B11100, B00101, B11101, B00111, B00101, B00101};
-//byte sheater[] = {B11100, B00100, B11000, B10101, B11101, B00111, B00101, B00101};
-byte sheater[] = {  B10100, B11100, B10100, B00111, B00001, B00111, B00100, B00111};
+byte pheater[] = {B10100, B11100, B10100, B00010, B00110, B00010, B00010, B00111};
+byte sheater[] = {B10100, B11100, B10100, B00111, B00001, B00111, B00100, B00111};
 byte gcelsius[] = {B01000, B10100, B01000, B00110, B01001, B01000, B01001, B00110};
 byte gwm[] = {B11111, B01000, B00100, B01000, B11111, B00000, B11111, B00110};
 byte gpw[] = {B00110, B11111, B00000, B11100, B10100, B10100, B11111, B00000};
@@ -66,31 +61,19 @@ void DisplayService::loop()
     {
         lastUpdate = now();
         printHead();
-        printBody(1, pheater_icon, gwm_icon, _activeStatus->Temperature, _activeStatus->TargetTemperature, _activeStatus->PWMPercentage,
-                  _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
+
+        if (_activeStatus->ActiveStep == mash || _activeStatus->ActiveStep == none)
+            printBody(1, pheater_icon, gwm_icon, _activeStatus->Temperature, _activeStatus->TargetTemperature, _activeStatus->PWMPercentage,
+                      _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
+        if (_activeStatus->ActiveStep == boil)
+            printBody(1, pheater_icon, gwm_icon, _activeStatus->BoilTemperature, _activeStatus->BoilTargetTemperature, _activeStatus->BoilPWMPercentage,
+                      _activeStatus->PumpOn, _activeStatus->BrewStarted, true, false, _activeStatus->EnableSparge);
+
         printBody(2, sheater_icon, gpw_icon, _activeStatus->SpargeTemperature, _activeStatus->SpargeTargetTemperature, _activeStatus->SpargePWMPercentage,
                   _activeStatus->PumpOn, _activeStatus->BrewStarted, false, true, _activeStatus->EnableSparge);
         printFooter();
     }
 }
-
-/* void DisplayService::printHead()
-{
-    _lcd->setCursor(0, 0);
-    wl_status_t status = WiFi.status();
-    WiFiMode_t currentWiFiMode = WiFi.getMode();
-    if (status == WL_CONNECTED)
-        _lcd->write(2);
-    else if (currentWiFiMode == WIFI_AP || currentWiFiMode == WIFI_AP_STA)
-        _lcd->write(1);
-    _lcd->print(" BrewUNO  ");
-    if (_activeStatus->BrewStarted && !_activeStatus->StepLocked)
-        _lcd->print(" " + GetCount(true));
-    else if (_activeStatus->StepLocked)
-        _lcd->print(GetCount(false) + 'L');
-    else
-        _lcd->print("         ");
-} */
 
 void DisplayService::printHead()
 {
@@ -98,25 +81,19 @@ void DisplayService::printHead()
     wl_status_t status = WiFi.status();
     WiFiMode_t currentWiFiMode = WiFi.getMode();
     if (status == WL_CONNECTED)
-        _lcd->write(2);
+        _lcd->write(stmode_icon);
     else if (currentWiFiMode == WIFI_AP || currentWiFiMode == WIFI_AP_STA)
-        _lcd->write(1);
-    _lcd->print("BRewUNO9b ");
-    if (_activeStatus->BrewStarted && !_activeStatus->StepLocked) {
-        _lcd->print(GetCount(true));
-        _lcd->setCursor(19, 2);
-        _lcd->print(" ");
+        _lcd->write(apmode_icon);
+    if (_activeStatus->BrewStarted && !_activeStatus->StepLocked)
+    {
+        _lcd->print(" BrewUNO   " + GetCount(true));
     }
-    else if (_activeStatus->StepLocked) {
-        _lcd->print(GetCount(false));
-        _lcd->setCursor(19, 2);
-        _lcd->print("L");
+    else if (_activeStatus->StepLocked)
+    {
+        _lcd->print(" BrewUNO  " + GetCount(false) + "L");
     }
-    else {
-        _lcd->print("         ");
-        _lcd->setCursor(19, 2);
-        _lcd->print(" ");
-    } 
+    else
+        _lcd->print(" BrewUNO  v" + String(Version) + "  ");
 }
 
 void DisplayService::printBody(int line, byte heatIcon, byte pwmIcon, double temperature, double targetTemperature,
@@ -132,7 +109,10 @@ void DisplayService::printBody(int line, byte heatIcon, byte pwmIcon, double tem
                     ">" + (brewStarted ? getTemperature(targetTemperature, true) : "00"));
 
     _lcd->setCursor(10, line);
-    _lcd->write(gcelsius_icon);
+    if (_activeStatus->TempUnit == "C")
+        _lcd->write(gcelsius_icon);
+    else
+        _lcd->print("F");
     _lcd->setCursor(13, line);
     _lcd->write(pwmIcon);
     _lcd->setCursor(14, line);
@@ -171,7 +151,7 @@ void DisplayService::printFooter()
     else if (_activeStatus->ActiveStep == mash)
     {
         String step = _activeStatus->ActiveMashStepName.substring(0, 12) + " " + _activeStatus->ActiveMashStepSufixName.substring(0, 7);
-        _lcd->print(step.substring(0,20));
+        _lcd->print(step.substring(0, 20));
         RemoveLastChars(step.length());
     }
     else if (_activeStatus->ActiveStep == boil && _activeStatus->ActiveBoilStepName != "")

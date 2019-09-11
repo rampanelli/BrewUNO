@@ -28,7 +28,7 @@ This is the easiest way to mount your brewuno, you can improve it!
 
 ### Installing with Flash Download Tools ([video](http://www.brewuno.com/download/install.mp4))
 
-* Download [bin files](https://github.com/uncodead/BrewUNO/tree/master/bin)
+* Download [bin files](https://github.com/rampanelli/BrewUNO/tree/master/bin)
 * Download [Flash Download Tools](https://www.espressif.com/sites/default/files/tools/flash_download_tools_v3.6.6_0.zip)
 * Setup like this: [setup](http://brewuno.com/download/esp8266-download-tool.png)
 * firmware.bin offset: 0x0

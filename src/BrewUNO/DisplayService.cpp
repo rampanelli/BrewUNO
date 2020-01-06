@@ -2,8 +2,8 @@
 
 time_t lastUpdate = now();
 String blankline = "                    ";
-byte apmode[] = {B01010, B00100, B01010, B00100, B00100, B00100, B01110, B11111};
-byte stmode[] = {B01110, B10001, B00100, B01010, B00000, B00100, B00000, B00000};
+byte apmode[] = {B10001, B10101, B10101, B01110, B00100, B00100, B00100, B00100};
+byte stmode[] = {B00001, B00001, B00011, B00011, B00111, B01111, B01111, B00000};
 byte gpump[] = {B00100, B00100, B01110, B01110, B11111, B11101, B11011, B01110};
 byte pheater[] = {B10100, B11100, B10100, B00010, B00110, B00010, B00010, B00111};
 byte sheater[] = {B10100, B11100, B10100, B00111, B00001, B00111, B00100, B00111};
@@ -27,7 +27,11 @@ void DisplayService::autoScan()
     for (address = 1; address < 127; address++)
     {
         if (address == PCF8574_ADDRESS)
+        {
+            Serial.print("Found not display addr: ");
+            Serial.println(address, HEX);
             continue;
+        }
         Wire.beginTransmission(address);
         error = Wire.endTransmission();
         if (error == 0)
@@ -57,7 +61,7 @@ void DisplayService::begin()
 
 void DisplayService::loop()
 {
-    if (now() - lastUpdate > 0.8)
+    if (now() - lastUpdate > 0.9)
     {
         lastUpdate = now();
         printHead();
@@ -86,14 +90,29 @@ void DisplayService::printHead()
         _lcd->write(apmode_icon);
     if (_activeStatus->BrewStarted && !_activeStatus->StepLocked)
     {
-        _lcd->print(" BrewUNO   " + GetCount(true));
+        _activeStatus->Count = GetCount(true);
+        _lcd->print(" BrewUNO   " + _activeStatus->Count);
+        _lcd->setCursor(19, 2);
+        if (_activeStatus->BrewStarted && _activeStatus->ActiveStep == boil)
+        _lcd->print("B");
+        if (_activeStatus->BrewStarted && _activeStatus->ActiveStep == mash)
+        _lcd->print("M");
     }
     else if (_activeStatus->StepLocked)
     {
-        _lcd->print(" BrewUNO  " + GetCount(false) + "L");
+        _activeStatus->Count = GetCount(false);
+        //_lcd->print(" BrewUNO  " + _activeStatus->Count + "L");
+        _lcd->print(" BrewUNO   " + _activeStatus->Count);
+        _lcd->setCursor(19, 2);
+        _lcd->print("L");
     }
     else
+    {
         _lcd->print(" BrewUNO  v" + String(Version) + "  ");
+        _lcd->setCursor(19, 2);
+        if ( _activeStatus->ActiveStep != boil && _activeStatus->ActiveStep != mash)
+            _lcd->print(" ");
+    }
 }
 
 void DisplayService::printBody(int line, byte heatIcon, byte pwmIcon, double temperature, double targetTemperature,

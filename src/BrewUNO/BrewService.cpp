@@ -22,14 +22,14 @@ BrewService::BrewService(AsyncWebServer *server,
                                        _temperatureService(temperatureService),
                                        _pump(pump)
 {
-    _server->on(START_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::startBrew, this, std::placeholders::_1));
-    _server->on(STOP_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::stopBrew, this, std::placeholders::_1));
+    _server->on(START_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::startBrewHttp, this, std::placeholders::_1));
+    _server->on(STOP_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::stopBrewHttp, this, std::placeholders::_1));
     _server->on(GET_ACTIVE_STATUS_SERVICE_PATH, HTTP_GET, std::bind(&BrewService::getActiveStatus, this, std::placeholders::_1));
-    _server->on(NEXT_STEP_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::nextStep, this, std::placeholders::_1));
-    _server->on(PAUSE_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::pauseBrew, this, std::placeholders::_1));
-    _server->on(RESUME_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::resumeBrew, this, std::placeholders::_1));
-    _server->on(UNLOCK_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::unLockBrew, this, std::placeholders::_1));
-    _server->on(START_BOIL_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::startBoil, this, std::placeholders::_1));
+    _server->on(NEXT_STEP_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::nextStepHttp, this, std::placeholders::_1));
+    _server->on(PAUSE_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::pauseBrewHttp, this, std::placeholders::_1));
+    _server->on(RESUME_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::resumeBrewHttp, this, std::placeholders::_1));
+    _server->on(UNLOCK_BREW_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::unLockBrewHttp, this, std::placeholders::_1));
+    _server->on(START_BOIL_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::startBoilHttp, this, std::placeholders::_1));
     _server->on(START_ANTICAVITATION_SERVICE_PATH, HTTP_POST, std::bind(&BrewService::startAnticavitation, this, std::placeholders::_1));
     _updateHandler.setUri(CHANGE_BOIL_PERCENTAGE_SERVICE_PATH);
     _updateHandler.setMethod(HTTP_POST);
@@ -40,7 +40,13 @@ BrewService::BrewService(AsyncWebServer *server,
 
 BrewService::~BrewService() {}
 
-void BrewService::startBrew(AsyncWebServerRequest *request)
+void BrewService::startBrewHttp(AsyncWebServerRequest *request)
+{
+    startBrew();
+    request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
+}
+
+void BrewService::startBrew()
 {
     _activeStatus->TimeNow = now();
     _activeStatus->ActiveStep = mash;
@@ -49,25 +55,34 @@ void BrewService::startBrew(AsyncWebServerRequest *request)
     _activeStatus->ActiveBoilStepIndex = "";
     _activeStatus->BoilTime = _brewSettingsService->BoilTime * 60;
     _activeStatus->BoilTargetTemperature = _brewSettingsService->BoilTemperature;
-    _activeStatus->BoilPowerPercentage = _brewSettingsService->BoilPowerPercentage;
     _activeStatus->SaveActiveStatus();
     _mashKettleHeaterService->StartPID(_brewSettingsService->KP, _brewSettingsService->KI, _brewSettingsService->KD);
     _spargeKettleHeaterService->StartPID(_brewSettingsService->KP, _brewSettingsService->KI, _brewSettingsService->KD);
     _boilKettleHeaterService->StartPID(100, 100, 100);
     _mashService->LoadMashSettings();
     _boilService->LoadBoilSettings();
+}
+
+void BrewService::pauseBrewHttp(AsyncWebServerRequest *request)
+{
+    pauseBrew();
     request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
-void BrewService::pauseBrew(AsyncWebServerRequest *request)
+void BrewService::pauseBrew()
 {
     _activeStatus->BrewStarted = false;
     _pump->TurnPumpOff();
     _activeStatus->SaveActiveStatus();
+}
+
+void BrewService::resumeBrewHttp(AsyncWebServerRequest *request)
+{
+    resumeBrew();
     request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
-void BrewService::resumeBrew(AsyncWebServerRequest *request)
+void BrewService::resumeBrew()
 {
     if (_activeStatus->StartTime > 0 && _activeStatus->EndTime > 0)
     {
@@ -76,7 +91,6 @@ void BrewService::resumeBrew(AsyncWebServerRequest *request)
         int timeLeft = timeTotal - timeSpent;
         _activeStatus->EndTime = now() + timeLeft;
     }
-    _activeStatus->BoilPowerPercentage = _brewSettingsService->BoilPowerPercentage;
     _activeStatus->BrewStarted = true;
     _activeStatus->SaveActiveStatus();
     _mashKettleHeaterService->StartPID(_brewSettingsService->KP, _brewSettingsService->KI, _brewSettingsService->KD);
@@ -88,36 +102,55 @@ void BrewService::resumeBrew(AsyncWebServerRequest *request)
         _pump->TurnPumpOn();
     else
         _pump->TurnPumpOff();
+}
+
+void BrewService::unLockBrewHttp(AsyncWebServerRequest *request)
+{
+    unLockBrew();
     request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
-void BrewService::unLockBrew(AsyncWebServerRequest *request)
+void BrewService::unLockBrew()
 {
     _activeStatus->StepLock = false;
     _activeStatus->SaveActiveStatus();
+}
+
+void BrewService::stopBrewHttp(AsyncWebServerRequest *request)
+{
+    stopBrew();
     request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
-void BrewService::stopBrew(AsyncWebServerRequest *request)
+void BrewService::stopBrew()
 {
     _activeStatus->SaveActiveStatus(0, 0, 0, 0, -1, "", 0, 0, none, false);
     _pump->TurnPumpOff();
     _mashKettleHeaterService->Compute(_activeStatus->Temperature, _activeStatus->TargetTemperature, _brewSettingsService->MashHeaterPercentage);
     _spargeKettleHeaterService->Compute(_activeStatus->SpargeTemperature, _brewSettingsService->SpargeTemperature, _brewSettingsService->SpargePowerPercentage);
     _boilKettleHeaterService->Compute(_activeStatus->BoilTemperature, _brewSettingsService->BoilTemperature, _brewSettingsService->BoilPowerPercentage);
+}
 
+void BrewService::nextStepHttp(AsyncWebServerRequest *request)
+{
+    nextStep();
     request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
-void BrewService::nextStep(AsyncWebServerRequest *request)
+void BrewService::nextStep()
 {
     _activeStatus->StepLock = false;
     _activeStatus->EndTime = now();
     _activeStatus->SaveActiveStatus();
+}
+
+void BrewService::startBoilHttp(AsyncWebServerRequest *request)
+{
+    startBoil();
     request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
-void BrewService::startBoil(AsyncWebServerRequest *request)
+void BrewService::startBoil()
 {
     _activeStatus->TimeNow = now();
     _activeStatus->ActiveStep = boil;
@@ -126,12 +159,10 @@ void BrewService::startBoil(AsyncWebServerRequest *request)
     _activeStatus->ActiveBoilStepIndex = "";
     _activeStatus->BoilTime = _brewSettingsService->BoilTime * 60;
     _activeStatus->BoilTargetTemperature = _brewSettingsService->BoilTemperature;
-    _activeStatus->BoilPowerPercentage = _brewSettingsService->BoilPowerPercentage;
     _activeStatus->SaveActiveStatus();
     _boilKettleHeaterService->StartPID(100, 100, 100);
     _boilService->LoadBoilSettings();
     _pump->TurnPumpOff();
-    request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
 }
 
 void BrewService::startAnticavitation(AsyncWebServerRequest *request)
@@ -148,7 +179,7 @@ void BrewService::changeBoilPercentage(AsyncWebServerRequest *request, JsonDocum
 {
     if (json.is<JsonObject>())
     {
-        _activeStatus->BoilPowerPercentage = json["boil_power_percentage"];
+        _brewSettingsService->BoilPowerPercentage = json["boil_power_percentage"];
         _activeStatus->SaveActiveStatus();
         request->send(200, APPLICATION_JSON_TYPE, _activeStatus->GetJson());
     }
@@ -173,27 +204,26 @@ void BrewService::begin()
         _brewSettingsService->BoilSensor = _brewSettingsService->MainSensor;
         _activeStatus->MainSensor = _brewSettingsService->MainSensor;
         _activeStatus->BoilSensor = _brewSettingsService->BoilSensor;
-        _brewSettingsService->writeToFS();
     }
     if (_temperatureService->DeviceCount > 1 && _brewSettingsService->BoilSensor == "")
         _brewSettingsService->BoilSensor = _temperatureService->GetFirstSensorAddress();
 }
 
-time_t lastReadTemperature = now();
 void BrewService::loop()
 {
-    if (now() - lastReadTemperature > 1)
+    if (now() - _activeStatus->LastReadTemperature > 1)
     {
         Temperatures temps = _temperatureService->GetTemperatures();
         _activeStatus->SetTemperature(temps);
         _activeStatus->MainSensor = _brewSettingsService->MainSensor;
         _activeStatus->SpargeSensor = _brewSettingsService->SpargeSensor;
-        _activeStatus->BoilSensor = _brewSettingsService->EnableBoilKettle ? _brewSettingsService->BoilSensor : _activeStatus->MainSensor;
+        //_activeStatus->BoilSensor = _brewSettingsService->EnableBoilKettle ? _brewSettingsService->BoilSensor : _activeStatus->MainSensor;
+        _activeStatus->BoilSensor = _brewSettingsService->BoilSensor ? _brewSettingsService->BoilSensor : _activeStatus->MainSensor;
         _activeStatus->AuxOneSensor = _brewSettingsService->AuxOneSensor;
         _activeStatus->AuxTwoSensor = _brewSettingsService->AuxTwoSensor;
         _activeStatus->AuxThreeSensor = _brewSettingsService->AuxThreeSensor;
         _activeStatus->TempUnit = _brewSettingsService->TempUnit;
-        lastReadTemperature = now();
+        _activeStatus->LastReadTemperature = now();
     }
     _mashService->loop(_activeStatus);
     _boilService->loop(_activeStatus);
@@ -218,4 +248,5 @@ void BrewService::HeaterCompute()
     _activeStatus->BoilPWM = boilStatus.PWM;
     _activeStatus->BoilPWMPercentage = boilStatus.PWMPercentage;
     _activeStatus->PIDActing = mashStatus.PIDActing;
+    _activeStatus->BoilPowerPercentage = _brewSettingsService->BoilPowerPercentage;
 }

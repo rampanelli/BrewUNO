@@ -53,7 +53,6 @@ public:
 
   String Language;
   String TempUnit;
-
 protected:
   void readFromJsonObject(JsonObject &root);
   void writeToJsonObject(JsonObject &root);

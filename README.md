@@ -129,3 +129,58 @@ The default settings configure the device to bring up an access point on start u
 ## Donation
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=492TNNF63C9WG&source=url)
 [![apoiese](http://brewuno.com/images/apoia-se.png)](https://apoia.se/brewuno)
+
+## Alexa Integration
+Olá cervejeiros,
+
+Esta é uma simulação passo a passo do BrewUNO sofware para controle de brassagem que esta prestes a receber a integração com o assistente pessoal da amazon.
+
+O BrewUNO é desenvolvido pelo Bruno Leitão e conta com apoio de diversas pessoas dentre elas esse que vos fala, caso deseje dar o seu apoio, acesse brewuno.com e faça uma doação ou acesse o repositório github e contribua com sugestões e opiniões.
+
+Antes de iniciar, é importante que você conheça os comandos do BrewUNO pelo teclado, são eles:
+
+Botão 1 - Clique longo - Inicia/Termina o processo de brassagem ou mostura.
+	- Clique curto - Pausa/Retorna o processo (mostura/fervura) em andamento.
+Botão 2 - Clique longo - Inicia/Termina o processo de fervura.
+	- Clique curto - Decrementa a potência PWM onde permitido.
+Botão 3 - Clique longo - Avança para o próximo passo.
+	- Clique curto - Incrementa a potência PWM onde permitido.
+Botão 4 - Clique curto - Liga ou desliga a bomba/circulação.
+	- Clique longo - Não definido.
+
+
+Além disso é importante ficar de olho no display onde se pode identificar cada fase do processo:
+
+ - No canto superior esquerdo temos o símbolo do sinal wifi indicando o tipo de conexão, AP ou STATION.
+ - Ainda na primeira linha a identificação BrewUNO seguida da versão e release, que será substituída pelo timer sempre que um processo estiver em andamento.
+ - Na segunda linha temos a temperatura do sensor H1 seguida do setpoint de temperatura para o processo em andamento. Mais a frente temos o % PWM para H1.
+ - Ainda na segunda linha ao final temos a letra P (Pausa da bomba) ou o ícone de uma gota, indicando que o relé da bomba está ligado.
+ - Na terceira linha temos a temperatura do sensor H2 seguida do setpoint de temperatura para o processo em andamento. Mais a frente temos o % PWM para H2.
+ - Na quarta linha quando ligamos o equipamento pela primeira vez aparece o IP do BrewUNO em funcionamento no modo AP: 192.168.4.1, para conectar-se busque a rede BrewUNO e utilize a senha brew-uno. Após conectar-se você deve acessar o IP pelo browser e fazer as configurações para conexão na sua rede local para que o BrewUNO tenha acesso a internet e seja possível sincronizar o timer/ntp. Faça isso pelo endereço http://192.168.4.1/wifi-configuration, clique em network scanner, aguarde o escaneamento, clique sobre a rede wifi escolhida, preencha o campo Password com a senha dessa rede e clique em SAVE/SALVAR. Após executar este procedimento pode ser necessário reiniciar o BrewUNO e reconectar agora pelo novo IP que irá aparecer no display após a conexão pela rede local.
+ - Durante o processo de brassagem, poderão aparecer logo abaixo do ícone da gota/P no final da linha 3, as letras M que significa que o processo em execução é a mostura, a letra B indicando que o processo em execução é a fervura, ou ainda a letra L indicando que o BrewUNO encontra-se no estado de bloqueio/Locked aguardando que seja executada alguma tarefa externa, para sair desse estado deve-se segurar o botão 3 pressionado até ouvir um bipe. 
+ 	
+Agora que você já sabe utilizar o teclado, identificar as informações importantes no display e configurar o wifi, vamos em frente.
+
+O assistente Alexa irá suportar diversos comandos nativos sem necessidade de configurações adicionais pelo BrewUNO ou criação de rotinas personalizadas pelo app Amazon Alexa. E lembre, antes você precisa estar com o seu dispositivo (Echo Dot, Echo View ou outro) ligado a sua rede wifi e executar o comando "Alexa, buscar dispositivos" ou pelo aplicativo/site o comando equivalente.
+
+Alexa, ativar/ligar desativar/desligar mostura. (inicia o processo da brassagem que inclui a fervura ao final)
+Alexa, ativar/ligar desativar/desligar fervura. (inicia o processo de fervura avulsa)
+Alexa, ativar/ligar avanço. 
+Alexa, ativar/ligar circulação. (liga a bomba)
+Alexa, desativar/desligar bomba.
+Alexa, ativar/ligar pausa. (pausa o processo, desligando todas as resistências e a bomba)
+Alexa, ativar/ligar resumo. (retorna da pausa para o estado anterior)
+Alexa, ajustar o PWM em 55 por cento. (ajusta o PWM durante o processo onde for permitido esse ajuste também pelos botões 2 e 3)
+Alexa, desligue o brewuno. (desliga todos os processos em andamento)
+
+Você também pode criar rotinas personalizadas através do app Amazon Alexa do seu celular ou acessando sua conta da amazon pelo site https://alexa.amazon.com.br. 
+
+Exemplos de rotinas:
+Alexa, iniciar brassagem. (comando nativo: ligar mostura)
+Alexa, ligar a bomba (comando nativo: ativar circulação)
+Alexa, ajustar máxima potência. (ajustar o PWM em 100 por cento)
+Alexa, ajustar meia potência. (ajustar o PWM em 50 por cento)
+Alexa, ajustar 1 grau por minuto. (ajustar o PWM em XX por cento, referente a potência necessária para seu equipamento/receita para a subída de 1°C por minuto)
+
+Ou ainda durante a execução da fervura criar timers personalizados:
+Alexa, criar timer de 50 minutos para lúpulo de aroma. (cria um timer que avisará dentro de 50 minutos o momento para adicionar o lúpulo)

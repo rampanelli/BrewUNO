@@ -101,7 +101,7 @@ private:
   {
     switch (t)
     {
-      case EspalexaDeviceType::dimmable:      return "Dimmable light";
+      case EspalexaDeviceType::dimmable:      return "Dimmable switch";
       case EspalexaDeviceType::whitespectrum: return "Color temperature light";
       case EspalexaDeviceType::color:         return "Color light";
       case EspalexaDeviceType::extendedcolor: return "Extended color light";
@@ -113,7 +113,7 @@ private:
   {
     switch (t)
     {
-      case EspalexaDeviceType::dimmable:      return "LWB010";
+      case EspalexaDeviceType::dimmable:      return "SDI010";
       case EspalexaDeviceType::whitespectrum: return "LWT010";
       case EspalexaDeviceType::color:         return "LST001";
       case EspalexaDeviceType::extendedcolor: return "LCT015";
@@ -226,9 +226,9 @@ private:
           "<friendlyName>Espalexa ("+ String(s) +")</friendlyName>"
           "<manufacturer>Royal Philips Electronics</manufacturer>"
           "<manufacturerURL>http://www.philips.com</manufacturerURL>"
-          "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
+          "<modelDescription>Philips hue Dimmer Switch</modelDescription>"
           "<modelName>Philips hue bridge 2012</modelName>"
-          "<modelNumber>929000226503</modelNumber>"
+          "<modelNumber>324131092621</modelNumber>"
           "<modelURL>http://www.meethue.com</modelURL>"
           "<serialNumber>"+ escapedMac +"</serialNumber>"
           "<UDN>uuid:2f402f80-da50-11e1-9b23-"+ escapedMac +"</UDN>"

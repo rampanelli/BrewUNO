@@ -43,13 +43,13 @@ import SvgIcon from '@material-ui/core/SvgIcon';
 import { withSnackbar } from 'notistack';
 import BrewStyles from '../style/BrewStyle'
 import IntText from '../components/IntText'
+import { PageView, initGA, Event } from '../components/Tracking'
 
 let interval;
 
 class Brew extends Component {
   constructor(props) {
     super(props)
-    this.getStatus();
     this.state = {
       status: { temperature: '' },
       data: [],
@@ -59,23 +59,20 @@ class Brew extends Component {
       statusInitialized: false,
       copyDialogMessage: false
     }
-    interval = setInterval(() => { this.getStatus(); }, 5000);
+    this.getStatus()
+    interval = setInterval(() => { this.getStatus(); }, 3000);
   }
 
   updateStatus() {
     if (this.state.status.active_step > 0 && this.state.status.brew_started == 1) {
-      var now = getDateTime(this.state.status.time_now);
-      var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds()
       var splice_data = this.state.data;
-
       if (splice_data.length >= 200)
         splice_data.splice(0, 1);
-        
       this.setState({
         data: [...splice_data, {
-          name: time,
+          name: "",
           Target: this.getActiveStep().props.text === 'Mash' ? this.state.status.target_temperature : this.state.status.boil_target_temperature,
-          Current: this.getActiveStep().props.text === 'Mash' ? this.state.status.temperature :this.state.status.boil_temperature
+          Current: this.getActiveStep().props.text === 'Mash' ? this.state.status.temperature : this.state.status.boil_temperature
         }],
         boilPower: this.state.status.boil_power_percentage
       })
@@ -159,7 +156,8 @@ class Brew extends Component {
   }
 
   actionBrew = (message, url, callback) => {
-    if (message !== '') {
+    Event("Brew", url, "/brew")
+    if (message !== '')
       this.setState({
         confirmDialogOpen: true,
         copyDialogMessage: false,
@@ -172,7 +170,6 @@ class Brew extends Component {
           this.setState({ confirmDialogOpen: false })
         }
       });
-    }
     else {
       ExecuteRestCall(url, 'POST', (json) => { this.setState({ status: json }) }, null, this.props)
       if (callback) callback()
@@ -210,7 +207,7 @@ class Brew extends Component {
           : null}
         {this.state.status.active_step > 0 && this.state.status.active_step !== 3 ?
           <Button variant="contained" color="secondary" className={classes.button}
-            onClick={() => { this.actionBrew(<IntText text="Brew.StopConfirmation" />, STOP_BREW, () => { }) }}><Stop size="small" color="action" className={classes.button_icons} /></Button>
+            onClick={() => { this.actionBrew(<IntText text="Brew.StopConfirmation" />, STOP_BREW, () => { this.setState({ data: [] }) }) }}><Stop size="small" color="action" className={classes.button_icons} /></Button>
           : null}
         {this.state.status.active_step === 1 && this.state.status.brew_started === 1 && this.state.status.pid_tuning === 0 && this.state.status.step_locked === 0 ?
           <Button variant="contained" color="secondary" className={classes.button}
@@ -276,8 +273,12 @@ class Brew extends Component {
               PWM={this.state.status.pwm_percentage}
               SpargePWM={this.state.status.sparge_pwm_percentage}
               BoilPWM={this.state.status.boil_pwm_percentage}
+              TimeNotSet={this.state.status.time_not_set}
+              Count={this.state.status.count}
               ActiveStep={this.getActiveStep()}
+              TimeNow={this.state.status.time_now > 0 ? this.state.status.time_now : null}
               StartTime={this.state.status.start_time > 0 ? this.state.status.start_time : null}
+              ElapsedTime={this.state.status.elapsed_time > 0 ? this.state.status.elapsed_time : null}
               EndTime={this.state.status.end_time > 0 ? this.state.status.end_time : null}
               ActiveStepName={this.state.activeStepName}
               StepLocked={this.state.status.step_locked > 0}
@@ -323,7 +324,8 @@ class Brew extends Component {
             </Grid>
           </Grid>
           : null}
-        <Card className={classes.chartCard}>
+        {/*
+		<Card className={classes.chartCard}>
           <CardContent>
             <ResponsiveContainer width="90%" height={320} >
               <LineChart data={this.state.data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
@@ -350,7 +352,8 @@ class Brew extends Component {
               </Grid>
             </Grid>
           </Grid>
-        </Paper>
+        </Paper>  
+		*/}
         <ConfirmDialog
           confirmAction={this.state.confirmAction}
           confirmDialogOpen={this.state.confirmDialogOpen}
